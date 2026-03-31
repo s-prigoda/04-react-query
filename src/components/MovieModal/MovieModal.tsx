@@ -8,7 +8,16 @@ interface MovieModalProps {
   onClose: () => void;
 }
 
-const modalRoot = document.querySelector("#modal-root") as HTMLElement;
+// Функція для безпечного отримання або створення контейнера модалки
+const getModalRoot = (): HTMLElement => {
+  let root = document.getElementById("modal-root");
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "modal-root";
+    document.body.appendChild(root);
+  }
+  return root;
+};
 
 function MovieModal({ movie, onClose }: MovieModalProps) {
   useEffect(() => {
@@ -48,24 +57,35 @@ function MovieModal({ movie, onClose }: MovieModalProps) {
         >
           &times;
         </button>
-        <img
-          src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
-          alt={movie.title}
-          className={css.image}
-        />
+
+        <div className={css.imageThumb}>
+          <img
+            src={
+              movie.backdrop_path
+                ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
+                : `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+            }
+            alt={movie.title}
+            className={css.image}
+          />
+        </div>
+
         <div className={css.content}>
-          <h2>{movie.title}</h2>
-          <p>{movie.overview}</p>
-          <p>
-            <strong>Release Date:</strong> {movie.release_date}
-          </p>
-          <p>
-            <strong>Rating:</strong> {movie.vote_average}/10
-          </p>
+          <h2 className={css.title}>{movie.title}</h2>
+          <p className={css.overview}>{movie.overview}</p>
+
+          <div className={css.info}>
+            <p>
+              <strong>Release Date:</strong> {movie.release_date}
+            </p>
+            <p>
+              <strong>Rating:</strong> {movie.vote_average.toFixed(1)}/10
+            </p>
+          </div>
         </div>
       </div>
     </div>,
-    modalRoot
+    getModalRoot()
   );
 }
 

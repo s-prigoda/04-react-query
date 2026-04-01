@@ -19,6 +19,9 @@ const App = () => {
   const [page, setPage] = useState<number>(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const Paginate = (ReactPaginate as any).default || ReactPaginate;
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["movies", query, page],
     queryFn: () => fetchMovies(query, page),
@@ -30,39 +33,63 @@ const App = () => {
     setPage(1);
   };
 
-  const movies = data?.results || [];
-  const totalPages = data?.total_pages || 0;
+  const movies = data?.hits || [];
+  const totalPages = data?.nbPages ? Math.min(data.nbPages, 500) : 0;
 
   useEffect(() => {
-    if (query && data && data.results.length === 0 && !isLoading) {
-      toast.error("Ничого не знайдено за вашим запитом.");
+    if (query && data && data.hits.length === 0 && !isLoading) {
+      toast.error("Нічого не знайдено за вашим запитом.");
     }
   }, [data, query, isLoading]);
 
+  useEffect(() => {
+    if (page > 1) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [page]);
+
   return (
-    <div className={css.container}>
-      <Toaster position="top-right" />
+    <div className={css.app}>
+      <Toaster position="top-center" />
       <SearchBar onSubmit={handleSearch} />
 
       {isError && <ErrorMessage />}
-      {isLoading && <Loader />}
 
-      {!isError && movies.length > 0 && (
+      {isLoading ? (
+        <Loader />
+      ) : (
         <>
-          <MovieGrid movies={movies} onSelect={setSelectedMovie} />
+          {movies.length > 0 && (
+            <>
+              {totalPages > 1 && (
+                <div className={css.paginationWrapper}>
+                  <Paginate
+                    pageCount={totalPages}
+                    pageRangeDisplayed={3}
+                    marginPagesDisplayed={1}
+                    onPageChange={({ selected }: { selected: number }) =>
+                      setPage(selected + 1)
+                    }
+                    forcePage={page - 1}
+                    containerClassName={css.pagination}
+                    pageClassName={css.pageItem}
+                    pageLinkClassName={css.pageLink}
+                    activeClassName={css.active}
+                    previousClassName={css.pageItem}
+                    nextClassName={css.pageItem}
+                    previousLinkClassName={css.pageLink}
+                    nextLinkClassName={css.pageLink}
+                    breakLabel="..."
+                    breakClassName={css.pageItem}
+                    breakLinkClassName={css.pageLink}
+                    nextLabel="→"
+                    previousLabel="←"
+                  />
+                </div>
+              )}
 
-          {totalPages > 1 && typeof ReactPaginate === "function" && (
-            <ReactPaginate
-              pageCount={totalPages > 500 ? 500 : totalPages}
-              pageRangeDisplayed={3}
-              marginPagesDisplayed={1}
-              onPageChange={({ selected }) => setPage(selected + 1)}
-              forcePage={page - 1}
-              containerClassName={css.pagination}
-              activeClassName={css.active}
-              nextLabel="→"
-              previousLabel="←"
-            />
+              <MovieGrid movies={movies} onSelect={setSelectedMovie} />
+            </>
           )}
         </>
       )}

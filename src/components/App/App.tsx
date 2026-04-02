@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import toast, { Toaster } from "react-hot-toast";
 import ReactPaginate from "react-paginate";
 
@@ -26,6 +26,7 @@ const App = () => {
     queryKey: ["movies", query, page],
     queryFn: () => fetchMovies(query, page),
     enabled: !!query,
+    placeholderData: keepPreviousData,
   });
 
   const handleSearch = (newQuery: string) => {
@@ -55,7 +56,7 @@ const App = () => {
 
       {isError && <ErrorMessage />}
 
-      {isLoading ? (
+      {!data && isLoading ? (
         <Loader />
       ) : (
         <>
